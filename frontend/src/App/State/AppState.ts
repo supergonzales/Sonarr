@@ -16,7 +16,6 @@ import OAuthAppState from './OAuthAppState';
 import OrganizePreviewAppState from './OrganizePreviewAppState';
 import PathsAppState from './PathsAppState';
 import ProviderOptionsAppState from './ProviderOptionsAppState';
-import ReleasesAppState from './ReleasesAppState';
 import RootFolderAppState from './RootFolderAppState';
 import SeriesAppState, { SeriesIndexAppState } from './SeriesAppState';
 import SettingsAppState from './SettingsAppState';
@@ -34,6 +33,7 @@ export interface FilterBuilderProp<T> {
   optionsSelector?: (items: T[]) => FilterBuilderPropOption[];
 }
 
+// TODO: Make generic so key can be keyof T
 export interface PropertyFilter {
   key: string;
   value: string | string[] | number[] | boolean[] | DateFilterValue;
@@ -90,7 +90,6 @@ interface AppState {
   organizePreview: OrganizePreviewAppState;
   paths: PathsAppState;
   providerOptions: ProviderOptionsAppState;
-  releases: ReleasesAppState;
   rootFolders: RootFolderAppState;
   series: SeriesAppState;
   seriesHistory: SeriesHistoryAppState;
