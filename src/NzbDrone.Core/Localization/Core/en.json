@@ -156,6 +156,7 @@
   "BlackholeWatchFolder": "Watch Folder",
   "BlackholeWatchFolderHelpText": "Folder from which {appName} should import completed downloads",
   "Blocklist": "Blocklist",
+  "BlockListed": "Blocklisted",
   "BlocklistAndSearch": "Blocklist and Search",
   "BlocklistAndSearchHint": "Start a search for a replacement after blocklisting",
   "BlocklistAndSearchMultipleHint": "Start searches for replacements after blocklisting",

@@ -7,6 +7,7 @@ using NzbDrone.Common.Extensions;
 using NzbDrone.Core.DecisionEngine;
 using NzbDrone.Core.Download;
 using NzbDrone.Core.Exceptions;
+using NzbDrone.Core.History;
 using NzbDrone.Core.Indexers;
 using NzbDrone.Core.IndexerSearch;
 using NzbDrone.Core.Parser;
@@ -31,6 +32,7 @@ public class ReleaseController : RestController<ReleaseResource>
     private readonly ISeriesService _seriesService;
     private readonly IEpisodeService _episodeService;
     private readonly IParsingService _parsingService;
+    private readonly IHistoryService _historyService;
     private readonly Logger _logger;
 
     private readonly QualityProfile _qualityProfile;
@@ -44,6 +46,7 @@ public class ReleaseController : RestController<ReleaseResource>
                          ISeriesService seriesService,
                          IEpisodeService episodeService,
                          IParsingService parsingService,
+                         IHistoryService historyService,
                          ICacheManager cacheManager,
                          IQualityProfileService qualityProfileService,
                          Logger logger)
@@ -56,6 +59,7 @@ public class ReleaseController : RestController<ReleaseResource>
         _seriesService = seriesService;
         _episodeService = episodeService;
         _parsingService = parsingService;
+        _historyService = historyService;
         _logger = logger;
 
         _qualityProfile = qualityProfileService.GetDefaultProfile(string.Empty);
@@ -204,8 +208,9 @@ public class ReleaseController : RestController<ReleaseResource>
         {
             var decisions = await _releaseSearchService.EpisodeSearch(episodeId, true, true);
             var prioritizedDecisions = _prioritizeDownloadDecision.PrioritizeDecisions(decisions);
+            var history = _historyService.FindByEpisodeId(episodeId);
 
-            return MapDecisions(prioritizedDecisions);
+            return MapDecisions(prioritizedDecisions, history);
         }
         catch (SearchFailedException ex)
         {
@@ -224,8 +229,9 @@ public class ReleaseController : RestController<ReleaseResource>
         {
             var decisions = await _releaseSearchService.SeasonSearch(seriesId, seasonNumber, false, false, true, true);
             var prioritizedDecisions = _prioritizeDownloadDecision.PrioritizeDecisions(decisions);
+            var history = _historyService.GetBySeason(seriesId, seasonNumber, null);
 
-            return MapDecisions(prioritizedDecisions);
+            return MapDecisions(prioritizedDecisions, history);
         }
         catch (SearchFailedException ex)
         {
@@ -244,7 +250,7 @@ public class ReleaseController : RestController<ReleaseResource>
         var decisions = _downloadDecisionMaker.GetRssDecision(reports);
         var prioritizedDecisions = _prioritizeDownloadDecision.PrioritizeDecisions(decisions);
 
-        return MapDecisions(prioritizedDecisions);
+        return MapDecisions(prioritizedDecisions, new List<EpisodeHistory>());
     }
 
     private string GetCacheKey(ReleaseResource resource)
@@ -257,13 +263,13 @@ public class ReleaseController : RestController<ReleaseResource>
         return string.Concat(resource.IndexerId, "_", resource.Guid);
     }
 
-    private List<ReleaseResource> MapDecisions(IEnumerable<DownloadDecision> decisions)
+    private List<ReleaseResource> MapDecisions(IEnumerable<DownloadDecision> decisions, List<EpisodeHistory> history)
     {
         var result = new List<ReleaseResource>();
 
         foreach (var downloadDecision in decisions)
         {
-            var release = downloadDecision.MapDecision(result.Count, _qualityProfile);
+            var release = downloadDecision.MapDecision(result.Count, _qualityProfile, history);
 
             result.Add(release);
         }

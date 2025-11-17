@@ -6,6 +6,7 @@ using NzbDrone.Common.Extensions;
 using NzbDrone.Core.Datastore;
 using NzbDrone.Core.DecisionEngine;
 using NzbDrone.Core.Download;
+using NzbDrone.Core.History;
 using NzbDrone.Core.Indexers;
 using NzbDrone.Core.Parser.Model;
 using NzbDrone.Core.Profiles.Qualities;
@@ -81,7 +82,7 @@ public class ReleasePushController : RestController<ReleasePushResource>
             throw new ValidationException(new List<ValidationFailure> { new("Title", "Unable to parse", release.Title) });
         }
 
-        return decision.MapDecision(1, _qualityProfile);
+        return decision.MapDecision(1, _qualityProfile, new List<EpisodeHistory>());
     }
 
     private void ResolveIndexer(ReleaseInfo release)
