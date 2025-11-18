@@ -269,11 +269,72 @@ public class ReleaseController : RestController<ReleaseResource>
 
         foreach (var downloadDecision in decisions)
         {
-            var release = downloadDecision.MapDecision(result.Count, _qualityProfile, history);
+            var release = downloadDecision.MapDecision(result.Count, _qualityProfile);
+
+            release.History = AddHistory(downloadDecision.RemoteEpisode.Release, history);
 
             result.Add(release);
         }
 
         return result;
+    }
+
+    private ReleaseHistoryResource? AddHistory(ReleaseInfo release, List<EpisodeHistory> history)
+    {
+        var grabbed = history.FirstOrDefault(h => h.EventType == EpisodeHistoryEventType.Grabbed &&
+                                                  h.Data.TryGetValue("guid", out var guid) &&
+                                                  guid == release.Guid);
+
+        if (grabbed == null && release.DownloadProtocol == DownloadProtocol.Torrent)
+        {
+            if (release is not TorrentInfo torrentInfo)
+            {
+                return null;
+            }
+
+            if (torrentInfo.InfoHash.IsNotNullOrWhiteSpace())
+            {
+                grabbed = history.FirstOrDefault(h => h.EventType == EpisodeHistoryEventType.Grabbed &&
+                                                      ReleaseComparer.SameTorrent(new ReleaseComparerModel(h),
+                                                          torrentInfo));
+            }
+
+            if (grabbed == null)
+            {
+                grabbed = history.FirstOrDefault(h => h.EventType == EpisodeHistoryEventType.Grabbed &&
+                                                      h.SourceTitle == release.Title &&
+                                                      (DownloadProtocol)Convert.ToInt32(
+                                                          h.Data.GetValueOrDefault("protocol")) ==
+                                                      DownloadProtocol.Torrent &&
+                                                      ReleaseComparer.SameTorrent(new ReleaseComparerModel(h),
+                                                          torrentInfo));
+            }
+        }
+        else if (grabbed == null)
+        {
+            grabbed = history.FirstOrDefault(h => h.EventType == EpisodeHistoryEventType.Grabbed &&
+                                                  ReleaseComparer.SameNzb(new ReleaseComparerModel(h),
+                                                      release));
+        }
+
+        if (grabbed != null)
+        {
+            var resource = new ReleaseHistoryResource
+            {
+                Grabbed = grabbed.Date,
+            };
+
+            var failedHistory = history.FirstOrDefault(h => h.EventType == EpisodeHistoryEventType.DownloadFailed &&
+                                                            h.DownloadId == grabbed.DownloadId);
+
+            if (failedHistory != null)
+            {
+                resource.Failed = failedHistory.Date;
+            }
+
+            return resource;
+        }
+
+        return null;
     }
 }

@@ -219,13 +219,24 @@ function InteractiveSearchRow(props: InteractiveSearchRowProps) {
             name={icons.DOWNLOADING}
             kind={history.failed ? kinds.DANGER : kinds.DEFAULT}
             title={`${
-              history.failed ? translate('Failed') : translate('Grabbed')
-            }: ${formatDateTime(
-              history.failed ?? history.grabbed,
-              longDateFormat,
-              timeFormat,
-              { includeSeconds: true }
-            )}`}
+              history.failed
+                ? translate('FailedAt', {
+                    date: formatDateTime(
+                      history.failed,
+                      longDateFormat,
+                      timeFormat,
+                      { includeSeconds: true }
+                    ),
+                  })
+                : translate('GrabbedAt', {
+                    date: formatDateTime(
+                      history.grabbed,
+                      longDateFormat,
+                      timeFormat,
+                      { includeSeconds: true }
+                    ),
+                  })
+            }`}
           />
         ) : null}
 
@@ -238,12 +249,14 @@ function InteractiveSearchRow(props: InteractiveSearchRowProps) {
             kind={kinds.DANGER}
             title={
               history?.failed
-                ? `${translate('Blocklisted')}: ${formatDateTime(
-                    history.failed,
-                    longDateFormat,
-                    timeFormat,
-                    { includeSeconds: true }
-                  )}`
+                ? `${translate('BlockListedAt', {
+                    date: formatDateTime(
+                      history.failed,
+                      longDateFormat,
+                      timeFormat,
+                      { includeSeconds: true }
+                    ),
+                  })}`
                 : translate('Blocklisted')
             }
           />

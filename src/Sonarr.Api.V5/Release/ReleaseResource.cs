@@ -1,5 +1,4 @@
 using NzbDrone.Core.DecisionEngine;
-using NzbDrone.Core.History;
 using NzbDrone.Core.Languages;
 using NzbDrone.Core.Profiles.Qualities;
 using NzbDrone.Core.Tv;
@@ -32,7 +31,7 @@ public class ReleaseResource : RestResource
 
 public static class ReleaseResourceMapper
 {
-    public static ReleaseResource ToResource(this DownloadDecision model, List<EpisodeHistory> history)
+    public static ReleaseResource ToResource(this DownloadDecision model)
     {
         var releaseInfo = model.RemoteEpisode.Release;
         var parsedEpisodeInfo = model.RemoteEpisode.ParsedEpisodeInfo;
@@ -43,7 +42,6 @@ public static class ReleaseResourceMapper
             ParsedInfo = parsedEpisodeInfo.ToResource(),
             Release = releaseInfo.ToResource(),
             Decision = new ReleaseDecisionResource(model),
-            History = releaseInfo.ToResource(history),
 
             Languages = remoteEpisode.Languages,
             MappedSeriesId = remoteEpisode.Series?.Id,
@@ -59,9 +57,9 @@ public static class ReleaseResourceMapper
         };
     }
 
-    public static ReleaseResource MapDecision(this DownloadDecision decision, int initialWeight, QualityProfile profile, List<EpisodeHistory> history)
+    public static ReleaseResource MapDecision(this DownloadDecision decision, int initialWeight, QualityProfile profile)
     {
-        var release = decision.ToResource(history);
+        var release = decision.ToResource();
 
         release.ReleaseWeight = initialWeight;
 
